@@ -56,23 +56,65 @@ function onStart() {
     .setHorizontalAlignment("center")
     .setFontSize(10);
 
-  const dealerRegex = /^(.+?)\s+(\d{6})\s+(\d{1,2}\.\d{1,2})%$/;
+  const percentOnlyRegex = /^(.+?)\s+(\d{1,2}\.\d{1,2})%$/;
+  const bacOnlyRegex = /^(.+?)\s+(\d{6})$/;
+  const bothRegex = /^(.+?)\s+(\d{6})\s+(\d{1,2}\.\d{1,2})%$/;
+
   let outputRows = [];
   let errorRows = [];
+
+  const percentOnlyMap = {};
+  const bacOnlyMap = {};
+  const combinedFormat = [];
 
   rawData.forEach((line) => {
     if (line.trim() === "" || line.startsWith("Page")) return;
 
-    const match = line.match(dealerRegex);
-    if (match) {
-      const name = match[1].trim();
-      const bac = match[2];
-      const percent = parseFloat(match[3]) / 100;
-      outputRows.push([name, bac, percent, ""]); // Budget formula later
+    const bothMatch = line.match(bothRegex);
+    const percentMatch = line.match(percentOnlyRegex);
+    const bacMatch = line.match(bacOnlyRegex);
+
+    if (bothMatch) {
+      // All 3 parts present
+      const name = bothMatch[1].trim();
+      const bac = bothMatch[2];
+      const percent = parseFloat(bothMatch[3]) / 100;
+      outputRows.push([name, bac, percent, ""]);
+      combinedFormat.push(name);
+    } else if (percentMatch) {
+      const name = percentMatch[1].trim();
+      const percent = parseFloat(percentMatch[2]) / 100;
+      percentOnlyMap[name] = percent;
+    } else if (bacMatch) {
+      const name = bacMatch[1].trim();
+      const bac = bacMatch[2];
+      bacOnlyMap[name] = bac;
     } else {
       errorRows.push([line]);
     }
   });
+
+  // 🧠 Combine percentOnly + bacOnly (if both exist and no combined format was detected)
+  if (outputRows.length === 0 && Object.keys(percentOnlyMap).length && Object.keys(bacOnlyMap).length) {
+    for (const dealer in percentOnlyMap) {
+      const percent = percentOnlyMap[dealer];
+      const bac = bacOnlyMap[dealer] || "";
+      outputRows.push([dealer, bac, percent, ""]);
+    }
+  }
+
+  // ❌ Case: Only BAC data is found, no percentages
+  if (outputRows.length === 0 && Object.keys(bacOnlyMap).length && Object.keys(percentOnlyMap).length === 0) {
+    ui.alert("❌ Dealer percentages are missing. Please ensure % values are included.");
+    return;
+  }
+
+  // ❌ Case: Only percentages and no BAC or combined formats
+  if (outputRows.length === 0 && Object.keys(percentOnlyMap).length && Object.keys(bacOnlyMap).length === 0) {
+    for (const dealer in percentOnlyMap) {
+      outputRows.push([dealer, "", percentOnlyMap[dealer], ""]);
+    }
+  }
 
   // Data starts from row 3
   const dataStartRow = 3;
