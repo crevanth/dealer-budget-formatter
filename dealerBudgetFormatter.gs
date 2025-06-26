@@ -56,9 +56,9 @@ function onStart() {
     .setHorizontalAlignment("center")
     .setFontSize(10);
 
-  const percentOnlyRegex = /^(.+?)\s+(\d{1,2}\.\d{1,2})%$/;
+  const percentOnlyRegex = /^(.+?)\s+(\d{1,3}(?:\.\d{1,2})?)%$/;
   const bacOnlyRegex = /^(.+?)\s+(\d{6})$/;
-  const bothRegex = /^(.+?)\s+(\d{6})\s+(\d{1,2}\.\d{1,2})%$/;
+  const bothRegex = /^(.+?)\s+(\d{6})\s+(\d{1,3}(?:\.\d{1,2})?)%$/;
 
   let outputRows = [];
   let errorRows = [];
