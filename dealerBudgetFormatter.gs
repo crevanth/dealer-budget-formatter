@@ -56,6 +56,7 @@ function onStart() {
     .setHorizontalAlignment("center")
     .setFontSize(10);
 
+  const bacFirstRegex = /^(\d{6})\s+(.+?)\s+(\d{1,3}(?:\.\d{1,2})?)%$/;
   const percentOnlyRegex = /^(.+?)\s+(\d{1,3}(?:\.\d{1,2})?)%$/;
   const bacOnlyRegex = /^(.+?)\s+(\d{6})$/;
   const bothRegex = /^(.+?)\s+(\d{6})\s+(\d{1,3}(?:\.\d{1,2})?)%$/;
@@ -69,6 +70,16 @@ function onStart() {
 
   rawData.forEach((line) => {
     if (line.trim() === "" || line.startsWith("Page")) return;
+
+    const bacFirstMatch = line.match(bacFirstRegex);
+    if (bacFirstMatch) {
+      const bac = bacFirstMatch[1];
+      const name = bacFirstMatch[2].trim();
+      const percent = parseFloat(bacFirstMatch[3]) / 100;
+      outputRows.push([name, bac, percent, ""]);
+      combinedFormat.push(name);
+      return;
+    }
 
     const bothMatch = line.match(bothRegex);
     const percentMatch = line.match(percentOnlyRegex);
